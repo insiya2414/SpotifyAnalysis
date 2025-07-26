@@ -4,9 +4,11 @@ This project analyzes Spotify listening history data using Power BI.
 
 ## Files
 
-- `spotify_history.csv.xlsx`: Raw Spotify listening history data.
+- `spotify_history.xlsx`: Raw Spotify listening history data.
 - `Spotify Analysis.pdf`: Power BI report with visualizations and insights.
 - `Spotify Data Explaination.pdf`: Documentation explaining the data fields.
+- `Model_measures.txt`: Contains all DAX measures used in the Power BI dashboard, with comments and logic for each calculation.
+- `PowerBI_master_doc.md`: Overview of essential Power BI concepts, features, and best practices for working with Power BI.
 
 > **Note:** The original Power BI project file (`.pbix`) could not be uploaded due to admin restrictions.
 
@@ -14,7 +16,10 @@ This project analyzes Spotify listening history data using Power BI.
 
 1. Open the Power BI report ([Spotify Analysis.pdf](Spotify%20Analysis.pdf)) to view the analysis.
 2. Refer to [Spotify Data Explaination.pdf](Spotify%20Data%20Explaination.pdf) for details about the data columns.
-3. Use the raw data file ([spotify_history.csv.xlsx](spotify_history.csv.xlsx)) for your own analysis or to update the Power BI report.
+3. Use the raw data file ([spotify_history.xlsx](spotify_history.csv.xlsx)) for your own analysis or to update the Power BI report.
+4. Review [Model_measures.txt](Model_measures.txt) for all DAX measures and calculation logic used in the dashboard.
+5. Check [PowerBI_master_doc.md](PowerBI_Knowledge.md) for Power BI tips, concepts, and best practices.
+
 
 ## Project Goal
 

@@ -1,4 +1,3 @@
-
 # 📘 Power BI Interview Master Document
 
 **Structured Q\&A Format | Real-World Readiness | Updated 2025**
@@ -45,7 +44,8 @@ Defining how tables relate. It includes building relationships, applying busines
 ### 6. **What’s a Star Schema?**
 
 A central **fact table** (e.g., Sales) linked to surrounding **dimension tables** (e.g., Date, Customer, Product).
-eg: [star_schema.png](attachment:star_schema.png)
+
+![Star Schema Example](star_schema.png)
 > ✅ *Preferred in BI for simplicity, performance, and better DAX context.*
 
 ### 7. **Normalization vs. Denormalization**
