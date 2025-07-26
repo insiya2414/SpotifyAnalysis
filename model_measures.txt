@@ -1,0 +1,194 @@
+DEFINE 
+---- MODEL MEASURES BEGIN ----
+
+/* 
+--------------------------------------------------------------------------------
+Listening Time Measures
+--------------------------------------------------------------------------------
+*/
+
+/*
+Returns the selected value from the 'Listening Time (min)' parameter table.
+Used for dynamic thresholding in visuals.
+*/
+MEASURE 'Listening Time (min)'[Listening Time (min) Value] = 
+    SELECTEDVALUE('Listening Time (min)'[Listening Time (min)])
+
+/*
+Calculates the average listening time in minutes for all tracks.
+*/
+MEASURE spotify_history[Avg Listening Time (min)] = 
+    AVERAGE(spotify_history[ms_played]) / 60000
+
+/*
+Classifies tracks into quadrants based on average listening time and frequency.
+Quadrant logic:
+    1 = Low Time, High Frequency
+    2 = High Time, High Frequency
+    3 = High Time, Low Frequency
+    4 = Low Time, Low Frequency
+Used for scatter plot quadrant analysis.
+*/
+MEASURE spotify_history[CF Quadrant] = 
+    VAR AvgTime = [Avg Listening Time (min)] <= 'Listening Time (min)'[Listening Time (min) Value]
+    VAR TrackFreq = [Track Frequency] >= 'Track Frequency'[Track Frequency (Parameter) Value]
+    VAR RESULT = 
+        SWITCH(
+            TRUE(),
+            AvgTime && TrackFreq, 1,
+            NOT AvgTime && TrackFreq, 2,
+            NOT AvgTime && NOT TrackFreq, 3,
+            AvgTime && NOT TrackFreq, 4
+        )
+    RETURN RESULT
+
+/* 
+--------------------------------------------------------------------------------
+Yearly Album, Artist, and Track Measures
+--------------------------------------------------------------------------------
+*/
+
+/*
+Returns the count of unique albums in the latest year.
+*/
+MEASURE spotify_history[LatestYearAlbums] = 
+    VAR _LatestYear = MAX('Date Table'[Year])
+    RETURN CALCULATE(DISTINCTCOUNT(spotify_history[album_name]), 'Date Table'[Year] = _LatestYear)
+
+/*
+Returns the count of unique artists in the latest year.
+*/
+MEASURE spotify_history[LatestYearArtist] = 
+    VAR _LatestYear = MAX('Date Table'[Year])
+    RETURN CALCULATE(DISTINCTCOUNT(spotify_history[artist_name]), 'Date Table'[Year] = _LatestYear)
+
+/*
+Returns the count of unique tracks in the latest year.
+*/
+MEASURE spotify_history[LatestYearTracks] = 
+    VAR _LatestYear = MAX('Date Table'[Year])
+    RETURN CALCULATE(DISTINCTCOUNT(spotify_history[track_name]), 'Date Table'[Year] = _LatestYear)
+
+/*
+Returns the maximum year in the date table.
+*/
+MEASURE spotify_history[Max Year] = MAX('Date Table'[Year])
+
+/*
+Returns the minimum or maximum album count for the selected years (for line chart markers).
+*/
+MEASURE spotify_history[MinMax Albums Line Chart] = 
+    VAR _MaxValue = MAXX(ALLSELECTED('Date Table'[Year]), CALCULATE(DISTINCTCOUNT(spotify_history[album_name])))
+    VAR _MinValue = MINX(ALLSELECTED('Date Table'[Year]), CALCULATE(DISTINCTCOUNT(spotify_history[album_name])))
+    VAR _CurrentValue = DISTINCTCOUNT(spotify_history[album_name])
+    RETURN IF(_CurrentValue = _MaxValue || _CurrentValue = _MinValue, _CurrentValue, BLANK())
+
+/*
+Returns the minimum or maximum artist count for the selected years (for line chart markers).
+*/
+MEASURE spotify_history[MinMax Artists Line Chart] = 
+    VAR _MaxValue = MAXX(ALLSELECTED('Date Table'[Year]), CALCULATE(DISTINCTCOUNT(spotify_history[artist_name])))
+    VAR _MinValue = MINX(ALLSELECTED('Date Table'[Year]), CALCULATE(DISTINCTCOUNT(spotify_history[artist_name])))
+    VAR _CurrentValue = DISTINCTCOUNT(spotify_history[artist_name])
+    RETURN IF(_CurrentValue = _MaxValue || _CurrentValue = _MinValue, _CurrentValue, BLANK())
+
+/*
+Returns the minimum or maximum track count for the selected years (for line chart markers).
+*/
+MEASURE spotify_history[MinMax Tracks Line Chart] = 
+    VAR _MaxValue = MAXX(ALLSELECTED('Date Table'[Year]), CALCULATE(DISTINCTCOUNT(spotify_history[track_name])))
+    VAR _MinValue = MINX(ALLSELECTED('Date Table'[Year]), CALCULATE(DISTINCTCOUNT(spotify_history[track_name])))
+    VAR _CurrentValue = DISTINCTCOUNT(spotify_history[track_name])
+    RETURN IF(_CurrentValue = _MaxValue || _CurrentValue = _MinValue, _CurrentValue, BLANK())
+
+/*
+Returns the number of unique albums in the dataset.
+*/
+MEASURE spotify_history[No of Albums] = DISTINCTCOUNT(spotify_history[album_name]) 
+
+/*
+Returns the number of unique artists in the dataset.
+*/
+MEASURE spotify_history[No of Artists] = DISTINCTCOUNT(spotify_history[artist_name])
+
+/*
+Returns the number of unique tracks in the dataset.
+*/
+MEASURE spotify_history[No of Tracks] = DISTINCTCOUNT(spotify_history[track_name])
+
+/*
+Returns the count of unique albums in the previous year.
+*/
+MEASURE spotify_history[PreviousYearAlbums] = 
+    VAR _LatestYear = MAX('Date Table'[Year])
+    VAR _PreviousYear = _LatestYear - 1
+    RETURN CALCULATE(DISTINCTCOUNT(spotify_history[album_name]), 'Date Table'[Year] = _PreviousYear)
+
+/*
+Returns the count of unique artists in the previous year.
+*/
+MEASURE spotify_history[PreviousYearArtist] = 
+    VAR _LatestYear = MAX('Date Table'[Year])
+    VAR _PreviousYear = _LatestYear - 1
+    RETURN CALCULATE(DISTINCTCOUNT(spotify_history[artist_name]), 'Date Table'[Year] = _PreviousYear)
+
+/*
+Returns the count of unique tracks in the previous year.
+*/
+MEASURE spotify_history[PreviousYearTracks] = 
+    VAR _LatestYear = MAX('Date Table'[Year])
+    VAR _PreviousYear = _LatestYear - 1
+    RETURN CALCULATE(DISTINCTCOUNT(spotify_history[track_name]), 'Date Table'[Year] = _PreviousYear)
+
+/*
+Returns a KPI string comparing latest and previous year albums, with YoY %.
+*/
+MEASURE spotify_history[PY and YoY Albums KPI] = 
+    VAR _latest = [LatestYearAlbums]
+    VAR _previous = [PreviousYearAlbums]
+    VAR _YoY = IF(NOT(ISBLANK(_previous)), DIVIDE(_latest - _previous, _previous, 0), BLANK())
+    RETURN IF(NOT(ISBLANK(_previous)),
+        "vs PY: " & FORMAT(_previous, "#,##0") & 
+        " (" & FORMAT(_YoY,"0.00%") & ")",
+        "No Data"
+    )
+
+/*
+Returns a KPI string comparing latest and previous year artists, with YoY %.
+*/
+MEASURE spotify_history[PY and YoY Artists KPI] = 
+    VAR _latest = [LatestYearArtist]
+    VAR _previous = [PreviousYearArtist]
+    VAR _YoY = IF(NOT(ISBLANK(_previous)), DIVIDE(_latest - _previous, _previous, 0), BLANK())
+    RETURN IF(NOT(ISBLANK(_previous)),
+        "vs PY: " & FORMAT(_previous, "#,##0") & 
+        " (" & FORMAT(_YoY,"0.00%") & ")",
+        "No Data"
+    )
+
+/*
+Returns a KPI string comparing latest and previous year tracks, with YoY %.
+*/
+MEASURE spotify_history[PY and YoY Tracks KPI] = 
+    VAR _latest = [LatestYearTracks]
+    VAR _previous = [PreviousYearTracks]
+    VAR _YoY = IF(NOT(ISBLANK(_previous)), DIVIDE(_latest - _previous, _previous, 0), BLANK())
+    RETURN IF(NOT(ISBLANK(_previous)),
+        "vs PY: " & FORMAT(_previous, "#,##0") & 
+        " (" & FORMAT(_YoY,"0.00%") & ")",
+        "No Data"
+    )
+
+/*
+Returns the total number of rows (track plays) in the dataset.
+*/
+MEASURE spotify_history[Track Frequency] = COUNTROWS(spotify_history)
+
+/*
+Returns the selected value from the Track Frequency parameter table.
+*/
+MEASURE 'Track Frequency'[Track Frequency (Parameter) Value] = 
+    SELECTEDVALUE('Track Frequency'[Track Frequency (Parameter)])
+
+---- MODEL MEASURES END ----
+
